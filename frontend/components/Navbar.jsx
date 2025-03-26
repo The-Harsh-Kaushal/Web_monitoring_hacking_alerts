@@ -1,14 +1,21 @@
-import React from 'react'
-import './css/styling.css'
+import React from 'react';
+
 const Navbar = () => {
   return (
-    
+    <nav className="w-full h-16 bg-gray-900 flex items-center px-6 shadow-md">
+      {/* Brand Name */}
+      <div className="text-white text-xl font-semibold tracking-wide flex-1">
+        CyberShield
+      </div>
 
-    <div className="w-full h-16 bg-gray-900 flex items-center px-6 shadow-md box_shadow_1 justify-center">
-    <span className="text-white text-xl font-semibold tracking-wide ">CyberShield: Web Threat Protection</span>
-</div>
-    
-  )
-}
+      {/* Navigation Links */}
+      <ul className="flex space-x-6 text-white text-lg">
+        <li className="hover:text-gray-300 cursor-pointer">Web Monitoring</li>
+        <li className="hover:text-gray-300 cursor-pointer">Shielding</li>
+        <li className="hover:text-gray-300 cursor-pointer">About</li>
+      </ul>
+    </nav>
+  );
+};
 
-export default Navbar
+export default Navbar;

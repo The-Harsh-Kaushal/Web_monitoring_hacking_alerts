@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { NavLink, Link } from "react-router-dom";
 const ServerTrafficGraph = ({ data }) => {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
-    // Load data from props (backend data will replace this in the future)
     if (data && data.length > 0) {
       setChartData(data);
     } else {
-      // Example data with random traffic values
       setChartData([
         { hour: "00:00", requests: 120 },
         { hour: "01:00", requests: 80 },
@@ -42,9 +40,18 @@ const ServerTrafficGraph = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="w-full box_shadow_1 h-80 bg-gray-100 p-4 rounded-lg shadow-lg mt-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Server Traffic (Requests per Hour)</h2>
-      <ResponsiveContainer width="100%" height="90%">
+    <div className="w-full box_shadow_1 h-100 bg-gray-100 p-4 rounded-lg shadow-lg mt-6 mb-6">
+      {/* Heading and Link Container */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-semibold text-gray-800 ml-4">
+          Server Traffic (Requests per Hour)
+        </h2>
+        <NavLink to="/full-traffic-report" className="text-blue-500 hover:text-blue-700 flex items-center">
+          View Full Report <FontAwesomeIcon icon={faChevronRight} className="ml-1" />
+        </NavLink>
+      </div>
+
+      <ResponsiveContainer width="100%" height="85%">
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="hour" />
