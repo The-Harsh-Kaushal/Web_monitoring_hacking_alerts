@@ -1,22 +1,9 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import Main from '../components/Main'
-import { Route,Routes } from 'react-router-dom'
-import WebMonireport from '../components/WebMonireport'
-function App() {
- 
 
-  return (
-    <>
-    <Routes>
-      <Route path='/' element={<Main/>} />
-      <Route path='/full-traffic-report' element={<WebMonireport/>} />
-    </Routes>
-      
-      
-    </>
-  )
+import { RouterProvider } from "react-router-dom";
+import router from "./routes";
+function App() {
+  
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;
