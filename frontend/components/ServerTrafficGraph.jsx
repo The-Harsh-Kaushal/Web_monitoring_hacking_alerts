@@ -40,7 +40,7 @@ const ServerTrafficGraph = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="w-full box_shadow_1 h-100 bg-gray-100 p-4 rounded-lg shadow-lg mt-6 mb-6">
+    <div className="w-full box_shadow_1 h-100 bg-gray-100 p-4 rounded-lg shadow-lg ">
       {/* Heading and Link Container */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold text-gray-800 ml-4">

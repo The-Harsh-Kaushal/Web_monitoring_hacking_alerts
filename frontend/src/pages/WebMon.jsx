@@ -10,7 +10,7 @@ const WebMon = () => {
   return (
     <div>
         <Navbar/>
-        <div>
+        <div className='flex flex-col gap-8'>
           <ServerTrafficGraph/>
           <PageViewsPerSession/>
           <SessionDuration/>
