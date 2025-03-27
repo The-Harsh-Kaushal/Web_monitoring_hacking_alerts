@@ -1,25 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { ShieldCheck, AlertTriangle, Server, ShieldAlert } from "lucide-react";
 
-
-
 const ServerStatus = ({ isRunning = true, attacks = [] }) => {
   const [serverStatus, setServerStatus] = useState(isRunning);
-  const [attackHistory, setAttackHistory] = useState(attacks);
-
-  useEffect(() => {
-    // Simulating fetching attack history from backend in future
-    if (attacks.length === 0) {
-      setAttackHistory([
-        { time: "03:45 PM", type: "DDoS Attack", source: "192.168.1.12" },
-        { time: "05:20 AM", type: "SQL Injection", source: "203.145.22.5" },
-        { time: "11:15 PM", type: "XSS Attack", source: "176.98.45.33" },
-        { time: "07:05 AM", type: "Brute Force Attack", source: "88.102.34.12" },
-      ]);
-    } else {
-      setAttackHistory(attacks);
-    }
-  }, [attacks]);
+  const [attackHistory, setAttackHistory] = useState(() =>
+    attacks.length > 0
+      ? attacks
+      : [
+          { time: "03:45 PM", type: "DDoS Attack", source: "192.168.1.12" },
+          { time: "05:20 AM", type: "SQL Injection", source: "203.145.22.5" },
+          { time: "11:15 PM", type: "XSS Attack", source: "176.98.45.33" },
+          {
+            time: "07:05 AM",
+            type: "Brute Force Attack",
+            source: "88.102.34.12",
+          },
+        ]
+  );
 
   return (
     <div className="w-full box_shadow_1 bg-gray-900 text-white p-8 rounded-lg shadow-lg mt-6 mb-6">
@@ -68,8 +65,13 @@ const ServerStatus = ({ isRunning = true, attacks = [] }) => {
           <div className="bg-gray-800 p-4 rounded-md overflow-y-auto max-h-60">
             <ul className="text-sm space-y-3">
               {attackHistory.map((attack, index) => (
-                <li key={index} className="flex justify-between p-3 bg-gray-700 rounded-md">
-                  <span className="text-red-400 font-semibold">{attack.type}</span>
+                <li
+                  key={index}
+                  className="flex justify-between p-3 bg-gray-700 rounded-md"
+                >
+                  <span className="text-red-400 font-semibold">
+                    {attack.type}
+                  </span>
                   <span className="text-gray-300">{attack.source}</span>
                   <span className="text-gray-400">{attack.time}</span>
                 </li>
