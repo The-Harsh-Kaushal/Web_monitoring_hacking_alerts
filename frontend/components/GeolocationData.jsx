@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Circle } from "react-leaflet";
 
 const GeolocationData = ({ data }) => {
   const [geoData, setGeoData] = useState([]);
@@ -26,12 +26,15 @@ const GeolocationData = ({ data }) => {
       <div className="h-80 w-full mb-6">
         <MapContainer center={[20, 0]} zoom={2} className="h-full w-full rounded-lg">
           <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+          
+          {/* Replacing markers with small red dots */}
           {geoData.map((location, index) => (
-            <Marker key={index} position={[location.lat, location.lng]}>
-              <Popup>
-                {location.country} <br /> Visitors: {location.visitors}
-              </Popup>
-            </Marker>
+            <Circle
+              key={index}
+              center={[location.lat, location.lng]}
+              pathOptions={{ color: "red", fillColor: "red", fillOpacity: 1 }}
+              radius={50000} // Small radius for a dot effect
+            />
           ))}
         </MapContainer>
       </div>
