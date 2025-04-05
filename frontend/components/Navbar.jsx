@@ -17,12 +17,12 @@ const Navbar = () => {
         <NavLink to={"/shielding"}>
           <li className="hover:text-gray-300 cursor-pointer">Shielding</li>
         </NavLink>
-        <NavLink to={"/about"}>
+        {/* <NavLink to={"/about"}>
           <li className="hover:text-gray-300 cursor-pointer">About</li>
         </NavLink>
         <NavLink to={"/documentation"}>
           <li className="hover:text-gray-300 cursor-pointer">Dox</li>
-        </NavLink>
+        </NavLink> */}
       </ul>
     </nav>
   );
