@@ -1,15 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { NavLink, Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+
 const ServerTrafficGraph = ({ data }) => {
   const [chartData, setChartData] = useState([]);
 
   useEffect(() => {
     if (data && data.length > 0) {
-      setChartData(data);
+      // Format hour to string if needed
+      const formatted = data.map((item) => ({
+        hour: item.hour.toString().padStart(2, '0') + ":00",
+        requests: item.requests,
+      }));
+      setChartData(formatted);
     } else {
+      // Fallback demo data
       setChartData([
         { hour: "00:00", requests: 120 },
         { hour: "01:00", requests: 80 },
@@ -40,24 +55,34 @@ const ServerTrafficGraph = ({ data }) => {
   }, [data]);
 
   return (
-    <div className="w-full box_shadow_1 h-100 bg-gray-100 p-4 rounded-lg shadow-lg ">
-      {/* Heading and Link Container */}
+    <div className="w-full box_shadow_1 bg-gray-100 p-4 rounded-lg shadow-lg">
+      {/* Heading and Link */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold text-gray-800 ml-4">
           Server Traffic (Requests per Hour)
         </h2>
-        <NavLink to="/full-traffic-report" className="text-blue-500 hover:text-blue-700 flex items-center">
-          View Full Report <FontAwesomeIcon icon={faChevronRight} className="ml-1" />
+        <NavLink
+          to="/full-traffic-report"
+          className="text-blue-500 hover:text-blue-700 flex items-center"
+        >
+          View Full Report{" "}
+          <FontAwesomeIcon icon={faChevronRight} className="ml-1" />
         </NavLink>
       </div>
 
-      <ResponsiveContainer width="100%" height="85%">
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="hour" />
           <YAxis />
           <Tooltip />
-          <Line type="monotone" dataKey="requests" stroke="#8884d8" strokeWidth={2} />
+          <Line
+            type="monotone"
+            dataKey="requests"
+            stroke="#4f46e5"
+            strokeWidth={2}
+            dot={{ r: 3 }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>
