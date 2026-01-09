@@ -4,10 +4,11 @@ const jwt = require("jsonwebtoken");
 const { redis } = require("../Redis/RedisClient");
 const fs = require("fs");
 const path = require("path");
-const { config } = require("../config/index");
-const At_ttl = config.auth.AT_TTL;
-const Rt_ttl = config.auth.RT_TTL;
-
+const { got_blocked } = require("./Monitoring and Security/traffic");
+const At_ttl = process.env.AT_TTL;
+const Rt_ttl = process.env.RT_TTL;
+const Acess_token_secret = process.env.REFRESH_TOKEN_SECRET;
+const Refresh_token_secret = process.env.ACCESS_TOKEN_SECRET;
 //read the lua script
 let CreateSessionLua, RefreshSessionLua, LogoutSessionLua;
 
@@ -25,7 +26,7 @@ try {
     "utf8"
   );
 } catch (err) {
-  console.error("❌ Failed to load Redis Lua script:", err.message);
+  console.error("❌ Failed to load Redis Lua script: session ", err.message);
   process.exit(1);
 }
 
@@ -54,10 +55,10 @@ const CreateSession = async (req, res, next) => {
     };
 
     try {
-      const accessToken = jwt.sign(payload, config.auth.ACCESS_TOKEN_SECRET, {
+      const accessToken = jwt.sign(payload, Acess_token_secret, {
         expiresIn: At_ttl,
       });
-      const refreshToken = jwt.sign(payload, config.auth.REFRESH_TOKEN_SECRET, {
+      const refreshToken = jwt.sign(payload, Refresh_token_secret, {
         expiresIn: Rt_ttl,
       });
       // creating hash of the refresh token so that save the actual token if REdis leaks
@@ -92,7 +93,7 @@ const VerifySession = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const payload = jwt.verify(token, config.auth.ACCESS_TOKEN_SECRET);
+    const payload = jwt.verify(token, Acess_token_secret);
     req.user = payload;
     next();
   } catch (err) {
@@ -112,12 +113,12 @@ const RefreshSession = async (req, res, next) => {
   }
 
   try {
-    const payload = jwt.verify(refreshToken, config.auth.REFRESH_TOKEN_SECRET);
+    const payload = jwt.verify(refreshToken, Refresh_token_secret);
     const { iat, exp, ...rest } = payload;
-    const newrefreshToken = jwt.sign(rest, config.auth.REFRESH_TOKEN_SECRET, {
+    const newrefreshToken = jwt.sign(rest, Refresh_token_secret, {
       expiresIn: "7d",
     });
-    const newaccessToken = jwt.sign(rest, config.auth.ACCESS_TOKEN_SECRET, {
+    const newaccessToken = jwt.sign(rest, Acess_token_secret, {
       expiresIn: "15m",
     });
     const RT_P_Hash = sha256(refreshToken);
@@ -134,6 +135,15 @@ const RefreshSession = async (req, res, next) => {
       ],
     });
     if (!allowed) {
+      got_blocked(
+        Date.now(),
+        req.ip,
+        rest.uniqueId,
+        "Session stealing",
+        req.route?.path || req.path,
+        req.method,
+        300
+      );
       return res.status(403).json({
         msg: "Token is stolen Loging out of all sessions",
       });
@@ -164,7 +174,7 @@ const logout = async (req, res, next) => {
     });
   }
   try {
-    const payload = jwt.verify(refreshToken, config.auth.REFRESH_TOKEN_SECRET);
+    const payload = jwt.verify(refreshToken, Refresh_token_secret);
     const { iat, exp, ...rest } = payload;
     const Rt_Hash = sha256(refreshToken);
     const allowed = await redis.evalSha(LogoutSession_Sha, {

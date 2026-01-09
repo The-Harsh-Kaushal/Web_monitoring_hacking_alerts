@@ -1,8 +1,9 @@
 const bcrypt = require("bcrypt");
 const User = require("../Modals/User");
+const { redis } = require("../Redis/RedisClient");
+const { Count_new_sub } = require("./Monitoring and Security/traffic");
 
 const LoginMiddleware = async (req, res, next) => {
-  
   const { identifier, password } = req.body;
   if (!identifier || !password) {
     return res.status(400).json({
@@ -52,6 +53,7 @@ const SignInMiddleware = async (req, res, next) => {
 
     await newUser.save();
     req.user = newUser;
+    Count_new_sub();
     next();
   } catch (err) {
     if (err.code === 11000) {
@@ -65,5 +67,6 @@ const SignInMiddleware = async (req, res, next) => {
     throw err;
   }
 };
+const ResetMiddleware = (req, res, next) => {};
 
 module.exports = { LoginMiddleware, SignInMiddleware };

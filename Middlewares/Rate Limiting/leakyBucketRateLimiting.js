@@ -3,37 +3,34 @@ const jwt = require("jsonwebtoken");
 const { redis } = require("../../Redis/RedisClient");
 const fs = require("fs");
 const path = require("path");
-
+const { got_blocked } = require("../Monitoring and Security/traffic");
 
 //read the lua script
-let luaScript;
+let luaScript ,luaScript2;
 
 try {
   luaScript = fs.readFileSync(
     path.resolve(__dirname, "../../Redis/lua/RateLimiting/bucketScripting.lua"),
     "utf8"
   );
-  luaScript2 = fs.readFileSync(
-    path.resolve(__dirname, "../../Redis/lua/RateLimiting/RestbucketScript.lua"),
+  luaScript2 =  fs.readFileSync(
+    path.resolve(
+      __dirname,
+      "../../Redis/lua/RateLimiting/RestbucketScript.lua"
+    ),
     "utf8"
   );
 } catch (err) {
-  console.error("❌ Failed to load Redis Lua script:", err.message);
-  process.exit(1); 
+  console.error("❌ Failed to load Redis Lua script: leakybucket", err.message);
+  process.exit(1);
 }
-
-
 
 // load into redis, get SHA
-let sha , sha2;
-if (!luaScript || !luaScript2) {
-    throw new Error("Lua scripts not loaded from disk");
-  }
-async function loadLuaScripts(){
+let sha, sha2;
+async function loadLuaScripts() {
   sha = await redis.scriptLoad(luaScript);
-  sha2 =  await redis.scriptLoad(luaScript2);
+  sha2 = await redis.scriptLoad(luaScript2);
 }
-
 
 // reate limiter for authentication
 function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
@@ -61,8 +58,7 @@ function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
       });
     }
     // now the time to run lua script
-    
-    
+
     const allowed = await redis.evalSha(sha, {
       keys: [`bucket:PC:${u_id}`, `bucket:IP:${user_ip}`],
       arguments: [
@@ -73,9 +69,17 @@ function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
         String(Expiration_factor),
       ],
     });
-    console.log(allowed);
     if (allowed) return next();
-
+    //implementing the timeout on Ip's
+    got_blocked(
+      Date.now(),
+      req.ip,
+      "UNKNOWN",
+      "Brute Force",
+      req.route?.path || req.path,
+      req.method,
+      600
+    );
     return res.status(429).json({
       msg: "No more req for u ",
     });
@@ -83,7 +87,6 @@ function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
 }
 function RestLB(AuthCapacity, Auth_win_size_ms, Prefix, Expiration_factor) {
   return async function (req, res, next) {
-
     // defaults
     if (!AuthCapacity) AuthCapacity = 10;
     if (!Auth_win_size_ms) Auth_win_size_ms = 6000;
@@ -124,13 +127,20 @@ function RestLB(AuthCapacity, Auth_win_size_ms, Prefix, Expiration_factor) {
     });
 
     if (allowed) return next();
-
+    //implementing the timeout on Ip's
+    got_blocked(
+      Date.now(),
+      req.ip,
+      "UNKNOWN",
+      "Rate Limiting",
+      req.route?.path || req.path,
+      req.method,
+      300
+    );
     return res.status(429).json({
       msg: "No more requests for you",
     });
   };
 }
 
-
-
-module.exports = { AuthLB, RestLB,loadLuaScripts };
+module.exports = { AuthLB, RestLB, loadLuaScripts };

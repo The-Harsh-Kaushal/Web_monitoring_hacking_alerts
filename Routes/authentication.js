@@ -3,7 +3,6 @@ const router = express.Router();
 const { LoginMiddleware, SignInMiddleware } = require("../Middlewares/authMid");
 const { CreateSession } = require("../Middlewares/sessioinMid");
 
-
 router.post("/login", LoginMiddleware, CreateSession, (req, res) => {
   const tokens = req.tokens;
   res.cookie("refreshToken", tokens.refreshToken, {
@@ -29,12 +28,15 @@ router.post("/signin", SignInMiddleware, CreateSession, (req, res) => {
     secure: false,
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
-
   res.status(200).json({
     msg: "sucessfull SignIn",
     accessToken: tokens.accessToken,
   });
 });
-
+router.post("/reset", (req, res) => {
+  res.status(200).json({
+    msg: "reset sucessfull",
+  });
+});
 
 module.exports = router;

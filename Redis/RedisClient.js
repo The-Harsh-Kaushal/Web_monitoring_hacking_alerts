@@ -1,13 +1,19 @@
 const { createClient } = require("redis");
-const {config}= require('../config/index');
 
-const redis = createClient({
-  url: config.redis.uri,
-});
+let redis;
 
-redis.on("error", (err) => console.log("Redis Error : ", err));
-async function connectRedis() {
+async function connectRedis(url) {
+  if (redis) return redis; // prevent double connections
+  redis = createClient({ url });
+  console.log(url);
+  redis.on("error", (err) => {
+    console.error("Redis Error:", err);
+  });
+
   await redis.connect();
   console.log("Redis is UP");
+
+  return redis;
 }
-module.exports = { redis, connectRedis };
+
+module.exports = { connectRedis, getRedis: () => redis };
