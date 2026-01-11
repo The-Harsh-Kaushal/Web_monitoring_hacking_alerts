@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { LoginMiddleware, SignInMiddleware } = require("../Middlewares/authMid");
-const { CreateSession } = require("../Middlewares/sessioinMid");
+const { LoginMiddleware, SignInMiddleware } = require("../Middlewares/authentication/authMid");
+const { CreateSession } = require("../Middlewares/authentication/sessioinMid");
 
 router.post("/login", LoginMiddleware, CreateSession, (req, res) => {
   const tokens = req.tokens;

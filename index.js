@@ -4,7 +4,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
 const { createGateway } = require("./config/config");
-const { authenticationRoutes, sessionRoutes } = require("./config/routes");
+const { authenticationRoutes, sessionRoutes, adminRoutes } = require("./config/routes");
 const app = express();
 
 app.use(express.json());
@@ -22,7 +22,7 @@ app.use(cookieParser());
   app.use(express.static("./static"));
   app.use("/api/auth", authenticationRoutes);
   app.use("/api/session", sessionRoutes);
-
+  app.use("/api",adminRoutes);
   // 4️⃣ DB connection
   await mongoose.connect(process.env.MONGO_DB_URI);
   console.log("connection to DB successful");

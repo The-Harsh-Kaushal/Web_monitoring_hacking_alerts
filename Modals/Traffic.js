@@ -5,7 +5,6 @@ const TrafficSchema = new mongoose.Schema(
     date: {
       type: Date,
       required: true,
-      index: true,
     },
     Total_req: {
       type: Number,
@@ -28,4 +27,5 @@ const TrafficSchema = new mongoose.Schema(
 );
 
 TrafficSchema.index({ date: 1 }, { unique: true });
+mongoose.set("autoIndex", false);
 module.exports = mongoose.model("Traffic", TrafficSchema);

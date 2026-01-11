@@ -1,5 +1,5 @@
 const express = require("express");
-const { RefreshSession, logout, VerifySession } = require("../Middlewares/sessioinMid");
+const { RefreshSession, logout, VerifySession } = require("../Middlewares/authentication/sessioinMid");
 const router = express.Router();
 
 router.get("/refresh", RefreshSession, async (req, res,) => {

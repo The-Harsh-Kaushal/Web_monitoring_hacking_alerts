@@ -35,7 +35,7 @@ async function loadLuaScripts() {
 // reate limiter for authentication
 function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
   return async (req, res, next) => {
-    console.log("hit");
+  
     //setting default values
     if (!AuthCapacity) AuthCapacity = 10;
     if (!Auth_win_size_ms) Auth_win_size_ms = 6000;

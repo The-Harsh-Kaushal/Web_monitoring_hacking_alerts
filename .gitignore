@@ -1,4 +1,4 @@
 /node_modules
 /.env
 /static
-/index.js
+/dump.rdb

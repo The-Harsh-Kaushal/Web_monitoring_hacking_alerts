@@ -1,28 +1,37 @@
 const crypto = require("crypto");
-const User = require("../Modals/User");
+const User = require("../../Modals/User");
 const jwt = require("jsonwebtoken");
-const { redis } = require("../Redis/RedisClient");
+const { redis } = require("../../Redis/RedisClient");
 const fs = require("fs");
 const path = require("path");
-const { got_blocked } = require("./Monitoring and Security/traffic");
-const At_ttl = process.env.AT_TTL;
-const Rt_ttl = process.env.RT_TTL;
-const Acess_token_secret = process.env.REFRESH_TOKEN_SECRET;
-const Refresh_token_secret = process.env.ACCESS_TOKEN_SECRET;
+const { got_blocked } = require("../Monitoring and Security/traffic");
+const At_ttl = Number(process.env.AT_TTL);
+const Rt_ttl = Number(process.env.RT_TTL);
+const Acess_token_secret = process.env.ACCESS_TOKEN_SECRET;
+const Refresh_token_secret = process.env.REFRESH_TOKEN_SECRET;
 //read the lua script
 let CreateSessionLua, RefreshSessionLua, LogoutSessionLua;
 
 try {
   CreateSessionLua = fs.readFileSync(
-    path.resolve(__dirname, "../Redis/lua/Sessionhandling/tokenCreation.lua"),
+    path.resolve(
+      __dirname,
+      "../../Redis/lua/Sessionhandling/tokenCreation.lua"
+    ),
     "utf8"
   );
   RefreshSessionLua = fs.readFileSync(
-    path.resolve(__dirname, "../Redis/lua/Sessionhandling/refreshSession.lua"),
+    path.resolve(
+      __dirname,
+      "../../Redis/lua/Sessionhandling/refreshSession.lua"
+    ),
     "utf8"
   );
   LogoutSessionLua = fs.readFileSync(
-    path.resolve(__dirname, "../Redis/lua/Sessionhandling/logoutScripting.lua"),
+    path.resolve(
+      __dirname,
+      "../../Redis/lua/Sessionhandling/logoutScripting.lua"
+    ),
     "utf8"
   );
 } catch (err) {
@@ -123,7 +132,7 @@ const RefreshSession = async (req, res, next) => {
     });
     const RT_P_Hash = sha256(refreshToken);
     const RT_N_Hash = sha256(newrefreshToken);
-    console.log(`user:${rest.uniqueId}:rt`);
+
     // if token is valid but not persent in db likely it's stolen so logout all sessions
     const allowed = await redis.evalSha(RefreshSession_Sha, {
       keys: [`rt:${RT_P_Hash}`, `rt:${RT_N_Hash}`, `user:${rest.uniqueId}:rt`],

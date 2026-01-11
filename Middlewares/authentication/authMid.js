@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
-const User = require("../Modals/User");
-const { redis } = require("../Redis/RedisClient");
-const { Count_new_sub } = require("./Monitoring and Security/traffic");
+const User = require("../../Modals/User");
+const { redis } = require("../../Redis/RedisClient");
+const { Count_new_sub } = require(".././Monitoring and Security/traffic");
 
 const LoginMiddleware = async (req, res, next) => {
   const { identifier, password } = req.body;

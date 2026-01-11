@@ -2,7 +2,7 @@
 --           example: blocked:req:<request_id>
 --
 -- KEYS[2] = blocked request index set (time-windowed)
---           example: blocked:index:2026-01-08
+--           example: blocked:index:
 --
 -- KEYS[3] = ban key for enforcement
 --           example: ban:ip:<ip>

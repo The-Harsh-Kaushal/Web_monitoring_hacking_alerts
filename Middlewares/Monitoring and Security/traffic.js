@@ -178,10 +178,10 @@ const Ip_filter = async (req, res, next) => {
 const Count_new_sub = async () => {
   const time = new Date().toISOString().slice(0, 10);
   await redis.incrBy(`new:user:count:${time}`, 1).catch((err) => {
-    console.log("unable to register new sub entry");
+    console.log("unable to register new sub entry ",err);
   });
   await redis.expire(`new:user:count:${time}`, 172800, "NX").catch((err) => {
-    console.log("unable to log the new sub");
+    console.log("unable to log the new sub ",err);
   });
 };
 

@@ -6,7 +6,7 @@ const {
   AuthLB,
   RestLB,
 } = require("../Middlewares/Rate Limiting/leakyBucketRateLimiting");
-const { loadAuthLuaScripts } = require("../Middlewares/sessioinMid");
+const { loadAuthLuaScripts } = require("../Middlewares/authentication/sessioinMid");
 const {
   loadTrafficLuaScripts,
   Ip_filter,
