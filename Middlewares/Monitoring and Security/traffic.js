@@ -2,10 +2,14 @@ const { redis } = require("../../Redis/RedisClient");
 const fs = require("fs");
 const path = require("path");
 const { randomUUID } = require("crypto");
-let TrafficLuaScript, BlockReqLua;
+let TrafficLuaScript, BlockReqLua, latencyErrorLua;
 try {
   TrafficLuaScript = fs.readFileSync(
     path.resolve(__dirname, "../../Redis/lua/Monitor&Security/traffic.lua"),
+    "utf8"
+  );
+  latencyErrorLua = fs.readFileSync(
+    path.resolve(__dirname, "../../Redis/lua/Monitor&Security/latencyErrorTracker.lua"),
     "utf8"
   );
   BlockReqLua = fs.readFileSync(
@@ -20,11 +24,12 @@ try {
   process.exit(1);
 }
 
-let TrafficSha, BlockedReqSha;
+let TrafficSha, BlockedReqSha,latencyErrorSha;
 
 async function loadTrafficLuaScripts() {
   TrafficSha = await redis.scriptLoad(TrafficLuaScript);
   BlockedReqSha = await redis.scriptLoad(BlockReqLua);
+  latencyErrorSha= await redis.scriptLoad(latencyErrorLua);
 }
 
 function getBucket(latencyMs) {
@@ -57,7 +62,7 @@ const Register_Traffic = async (req, res, next) => {
         `ip:${ip}`,
         `Unique:IP:Counter:${day}`,
       ],
-      arguments: [String(endpoint),String(ip), String(nowSeconds)],
+      arguments: [String(endpoint), String(nowSeconds)],
     });
   } catch (err) {
     console.error("Traffic monitoring failed:", err.message);
@@ -78,43 +83,32 @@ const latency_Error_Tracker = (req, res, next) => {
 
       const day = new Date().toISOString().slice(0, 10);
       const route = req.route?.path || req.path;
-      const key = `latency:${day}:${req.method}:${route}`;
-      // key to track error rate
-      const key2 = `error:${day}`;
 
-      const pipeline = redis.multi();
-      //logic to track error rate
-      pipeline.hincrby(key2, "total_req", 1);
-      if (res.statusCode >= 400) {
-        pipeline.hincrby(key2, "errors", 1);
-        pipeline.hincrby(key2, `${req.method}:/${route}`, 1);
-      }
+      const latencyKey = `latency:${day}`;
+      const errorKey = `error:${day}`;
 
-      pipeline.hincrby(key, bucket, 1);
-      pipeline.hincrby(key, "count", 1);
-      pipeline.hincrbyfloat(key, "sum_ms", latencyMs);
+      const isError = res.statusCode >= 400 ? "1" : "0";
+      const methodRoute = `${req.method}:${route}`;
+      const ttl = "86400";
 
-      // update max_ms safely
-      pipeline.hget(key, "max_ms");
-      pipeline.exec(async (err, replies) => {
-        if (err) return;
-        const index = res.statusCode >= 400 ? 6 : 4;
-        const currentMax = Number(replies[index][1] || 0);
-        if (latencyMs > currentMax) {
-          await redis.hset(key, "max_ms", latencyMs);
-        }
+      await redis.evalSha(latencyErrorSha, {
+        keys: [latencyKey, errorKey],
+        arguments: [
+          bucket,
+          latencyMs.toString(),
+          isError,
+          methodRoute,
+          ttl
+        ]
       });
-
-      // set expiry once (cheap + safe)
-      await redis.expire(key, 86400, "NX");
-      await redis.expire(key2, 86400, "NX");
-    } catch (e) {
-      console.log(e);
+    } catch (err) {
+      console.error("Traffic monitoring failed:", err);
     }
   });
 
   next();
 };
+
 const got_blocked = async (
   timeStamp,
   ip,
@@ -182,7 +176,7 @@ const Ip_filter = async (req, res, next) => {
   return next();
 };
 const Count_new_sub = async () => {
-  const time = new Date().toISOString.slice(0, 10);
+  const time = new Date().toISOString().slice(0, 10);
   await redis.incrBy(`new:user:count:${time}`, 1).catch((err) => {
     console.log("unable to register new sub entry");
   });

@@ -9,8 +9,7 @@
 -- KEYS[4] -> STRING : global unique IP counter
 --
 -- ARGV[1] -> Endpoint
--- ARGV[2] -> IP address
--- ARGV[3] -> current timestamp (seconds)
+-- ARGV[2] -> current timestamp (seconds)
 ------------------------------------------------------------
 
 -- Per-endpoint per-IP request count

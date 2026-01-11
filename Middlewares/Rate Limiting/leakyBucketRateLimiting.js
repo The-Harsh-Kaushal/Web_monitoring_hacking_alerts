@@ -6,14 +6,14 @@ const path = require("path");
 const { got_blocked } = require("../Monitoring and Security/traffic");
 
 //read the lua script
-let luaScript ,luaScript2;
+let luaScript, luaScript2;
 
 try {
   luaScript = fs.readFileSync(
     path.resolve(__dirname, "../../Redis/lua/RateLimiting/bucketScripting.lua"),
     "utf8"
   );
-  luaScript2 =  fs.readFileSync(
+  luaScript2 = fs.readFileSync(
     path.resolve(
       __dirname,
       "../../Redis/lua/RateLimiting/RestbucketScript.lua"
