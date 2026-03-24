@@ -24,12 +24,12 @@ try {
   process.exit(1);
 }
 
-let TrafficSha, BlockedReqSha,latencyErrorSha;
+let TrafficSha, BlockedReqSha, latencyErrorSha;
 
 async function loadTrafficLuaScripts() {
   TrafficSha = await redis.scriptLoad(TrafficLuaScript);
   BlockedReqSha = await redis.scriptLoad(BlockReqLua);
-  latencyErrorSha= await redis.scriptLoad(latencyErrorLua);
+  latencyErrorSha = await redis.scriptLoad(latencyErrorLua);
 }
 
 function getBucket(latencyMs) {
@@ -58,9 +58,9 @@ const Register_Traffic = async (req, res, next) => {
     await redis.evalSha(TrafficSha, {
       keys: [
         `EndPoint:Traffic:${day}`,
-        `EWMA:GLOBAL`,
+        `ewma:global`,
         `ip:${ip}`,
-        `Unique:IP:Counter:${day}`,
+        `unique:ip:hll:${day}`,
       ],
       arguments: [String(endpoint), String(nowSeconds)],
     });
@@ -178,10 +178,10 @@ const Ip_filter = async (req, res, next) => {
 const Count_new_sub = async () => {
   const time = new Date().toISOString().slice(0, 10);
   await redis.incrBy(`new:user:count:${time}`, 1).catch((err) => {
-    console.log("unable to register new sub entry ",err);
+    console.log("unable to register new sub entry ", err);
   });
   await redis.expire(`new:user:count:${time}`, 172800, "NX").catch((err) => {
-    console.log("unable to log the new sub ",err);
+    console.log("unable to log the new sub ", err);
   });
 };
 

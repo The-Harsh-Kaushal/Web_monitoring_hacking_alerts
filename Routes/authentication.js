@@ -1,15 +1,20 @@
 const express = require("express");
 const router = express.Router();
 const { LoginMiddleware, SignInMiddleware } = require("../Middlewares/authentication/authMid");
-const { CreateSession } = require("../Middlewares/authentication/sessioinMid");
+const {
+  CreateSession,
+  sessionCookiePath,
+  isSecureCookie,
+} = require("../Middlewares/authentication/sessioinMid");
+const { AuthLB } = require("../config/config");
 
-router.post("/login", LoginMiddleware, CreateSession, (req, res) => {
+router.post("/login", AuthLB(), LoginMiddleware, CreateSession, (req, res) => {
   const tokens = req.tokens;
   res.cookie("refreshToken", tokens.refreshToken, {
     httpOnly: true,
     sameSite: "strict",
-    path: "/session",
-    secure: false,
+    path: sessionCookiePath,
+    secure: isSecureCookie,
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
 
@@ -19,13 +24,13 @@ router.post("/login", LoginMiddleware, CreateSession, (req, res) => {
   });
 });
 
-router.post("/signin", SignInMiddleware, CreateSession, (req, res) => {
+router.post("/signin", AuthLB(), SignInMiddleware, CreateSession, (req, res) => {
   const tokens = req.tokens;
   res.cookie("refreshToken", tokens.refreshToken, {
     httpOnly: true,
     sameSite: "strict",
-    path: "/session",
-    secure: false,
+    path: sessionCookiePath,
+    secure: isSecureCookie,
     maxAge: 1000 * 60 * 60 * 24 * 7,
   });
   res.status(200).json({

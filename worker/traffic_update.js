@@ -1,5 +1,5 @@
 const Traffic = require("../Modals/Traffic");
-const { redis } = require("../Redis/RedisClient");
+const { redis, connectRedis } = require("../Redis/RedisClient");
 const cron = require("node-cron");
 
 const MoveRedisToMongo = async () => {
@@ -7,13 +7,13 @@ const MoveRedisToMongo = async () => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
     const yesterday = d.toISOString().slice(0, 10);
+    const trafficDate = new Date(`${yesterday}T00:00:00.000Z`);
 
-    // Top 10 endpoints → 10 members = 20 array items
-    const response = await redis.zRevRange(
+    const response = await redis.zRangeWithScores(
       `EndPoint:Traffic:${yesterday}`,
       0,
-      19,
-      { WITHSCORES: true }
+      9,
+      { REV: true }
     );
 
     // Nothing to migrate
@@ -26,15 +26,15 @@ const MoveRedisToMongo = async () => {
     let total_req = 0;
     const endpoint_traffic = new Map();
 
-    for (let i = 0; i < response.length; i += 2) {
-      const count = Number(response[i + 1]);
-      endpoint_traffic.set(response[i], count);
+    for (const entry of response) {
+      const count = Number(entry.score);
+      endpoint_traffic.set(entry.value, count);
       total_req += count;
     }
 
     // Idempotent write (safe for retries / multiple instances)
     await Traffic.updateOne(
-      { date: yesterday },
+      { date: trafficDate },
       {
         $set: {
           Total_req: total_req,
@@ -49,7 +49,20 @@ const MoveRedisToMongo = async () => {
   }
 };
 
-MoveRedisToMongo();
-cron.schedule("0 0 * * *", async () => {
+let workerStarted = false;
+
+async function startTrafficWorker() {
+  if (workerStarted) {
+    return;
+  }
+
+  await connectRedis();
+  workerStarted = true;
+
   await MoveRedisToMongo();
-});
+  cron.schedule("0 0 * * *", async () => {
+    await MoveRedisToMongo();
+  });
+}
+
+module.exports = { MoveRedisToMongo, startTrafficWorker };

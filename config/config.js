@@ -21,10 +21,7 @@ const {
  * Bootstraps redis + lua and returns gateway middleware
  */
 const createGateway = async ({ enableHelmet }) => {
-
-  // 1️⃣ Redis bootstrap (optional but recommended)
-
-  // 2️⃣ Lua bootstrap (only if Redis is healthy)
+  await connectRedis();
 
   try {
     await loadLuaScripts();

@@ -5,6 +5,13 @@ const { redis } = require("../../Redis/RedisClient");
 function isValidDateString(date) {
   return /^\d{4}-\d{2}-\d{2}$/.test(date);
 }
+
+function toUtcDayBounds(date) {
+  return {
+    start: new Date(`${date}T00:00:00.000Z`),
+    end: new Date(`${date}T23:59:59.999Z`),
+  };
+}
 const admin_check = (req, res, next) => {
   if (!req.user) {
     return res.status(401).json({
@@ -43,10 +50,13 @@ const aggregate_traffic = async (req, res) => {
       return res.status(400).json({ error: "`from` cannot be after `to`" });
     }
 
+    const { start } = toUtcDayBounds(from);
+    const { end } = toUtcDayBounds(to);
+
     const result = await Traffic.aggregate([
       {
         $match: {
-          date: { $gte: from, $lte: to },
+          date: { $gte: start, $lte: end },
         },
       },
 
@@ -246,7 +256,7 @@ const EWMA_and_Unique_Ip_count = async (req, res) => {
 
   const day = new Date().toISOString().slice(0, 10);
 
-  const uniqueIpKey = `unique:ip:hll:${day}`; // HLL
+  const uniqueIpKey = `unique:ip:hll:${day}`;
   const ewmaKey = `ewma:global`;
 
   const intervalId = setInterval(async () => {
@@ -281,5 +291,5 @@ module.exports = {
   admin_check,
   fetchTrafficMetrics,
   fetchBlockedRequests,
-  EWMA_and_Unique_Ip_count
+  EWMA_and_Unique_Ip_count,
 };

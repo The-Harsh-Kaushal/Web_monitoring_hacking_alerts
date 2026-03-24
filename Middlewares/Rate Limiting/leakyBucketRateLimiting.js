@@ -59,16 +59,22 @@ function AuthLB(AuthCapacity, Auth_win_size_ms, IP_factor, Expiration_factor) {
     }
     // now the time to run lua script
 
-    const allowed = await redis.evalSha(sha, {
-      keys: [`bucket:PC:${u_id}`, `bucket:IP:${user_ip}`],
-      arguments: [
-        String(AuthCapacity),
-        String(Auth_win_size_ms),
-        String(Date.now()),
-        String(IP_factor),
-        String(Expiration_factor),
-      ],
-    });
+    let allowed;
+    try {
+      allowed = await redis.evalSha(sha, {
+        keys: [`bucket:PC:${u_id}`, `bucket:IP:${user_ip}`],
+        arguments: [
+          String(AuthCapacity),
+          String(Auth_win_size_ms),
+          String(Date.now()),
+          String(IP_factor),
+          String(Expiration_factor),
+        ],
+      });
+    } catch (err) {
+      console.error("Auth rate limiter failed:", err.message);
+      return next();
+    }
     if (allowed) return next();
     //implementing the timeout on Ip's
     got_blocked(
@@ -109,22 +115,28 @@ function RestLB(AuthCapacity, Auth_win_size_ms, Prefix, Expiration_factor) {
     }
 
     // ✅ extract unique identity from token
-    const uniqueId = payload.sub; // or payload.userId
+    const uniqueId = payload.uniqueId || payload.sub;
 
     if (!uniqueId) {
       return res.status(401).json({ msg: "Invalid token payload" });
     }
 
     // rate limit
-    const allowed = await redis.evalSha(sha2, {
-      keys: [`bucket:${Prefix}:${uniqueId}`],
-      arguments: [
-        AuthCapacity,
-        Auth_win_size_ms,
-        Date.now(),
-        Expiration_factor,
-      ],
-    });
+    let allowed;
+    try {
+      allowed = await redis.evalSha(sha2, {
+        keys: [`bucket:${Prefix}:${uniqueId}`],
+        arguments: [
+          String(AuthCapacity),
+          String(Auth_win_size_ms),
+          String(Date.now()),
+          String(Expiration_factor),
+        ],
+      });
+    } catch (err) {
+      console.error("REST rate limiter failed:", err.message);
+      return next();
+    }
 
     if (allowed) return next();
     //implementing the timeout on Ip's

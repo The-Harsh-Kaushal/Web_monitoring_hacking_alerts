@@ -9,6 +9,8 @@ const At_ttl = Number(process.env.AT_TTL);
 const Rt_ttl = Number(process.env.RT_TTL);
 const Acess_token_secret = process.env.ACCESS_TOKEN_SECRET;
 const Refresh_token_secret = process.env.REFRESH_TOKEN_SECRET;
+const sessionCookiePath = "/api/session";
+const isSecureCookie = process.env.NODE_ENV === "production";
 //read the lua script
 let CreateSessionLua, RefreshSessionLua, LogoutSessionLua;
 
@@ -125,10 +127,10 @@ const RefreshSession = async (req, res, next) => {
     const payload = jwt.verify(refreshToken, Refresh_token_secret);
     const { iat, exp, ...rest } = payload;
     const newrefreshToken = jwt.sign(rest, Refresh_token_secret, {
-      expiresIn: "7d",
+      expiresIn: Rt_ttl,
     });
     const newaccessToken = jwt.sign(rest, Acess_token_secret, {
-      expiresIn: "15m",
+      expiresIn: At_ttl,
     });
     const RT_P_Hash = sha256(refreshToken);
     const RT_N_Hash = sha256(newrefreshToken);
@@ -206,4 +208,6 @@ module.exports = {
   RefreshSession,
   logout,
   loadAuthLuaScripts,
+  sessionCookiePath,
+  isSecureCookie,
 };
